@@ -3,7 +3,7 @@
 
 library(tidyverse)
 
-df_raw <- read.delim("data/timecourse/0466_DIA-FA-GL_Botrytis-timecourse_54Samples_IntMatrix.tsv")
+df_raw <- read.delim("data/timecourse/input/0466_DIA-FA-GL_Botrytis-timecourse_54Samples_IntMatrix.tsv")
 
 # Remove rows that are entirely NA except for column PG.ProteinGroups
 df <- df_raw[!apply(df_raw[, setdiff(names(df_raw), "PG.ProteinGroups")], 1, function(x) all(is.na(x))), ]
@@ -12,6 +12,12 @@ df <- df_raw[!apply(df_raw[, setdiff(names(df_raw), "PG.ProteinGroups")], 1, fun
 df <- df %>%
 	filter(grepl("^AT", PG.ProteinGroups) |
 				 	grepl("^XP", PG.ProteinGroups))
+
+#pull count of Arabidopsis and Botrytis proteins
+#This is the number of proteins for each organism in the raw data
+df %>%
+	mutate(prefix = str_sub(PG.ProteinGroups, 1, 2)) %>%
+	count(prefix)
 
 #get sample metadata
 df <- df %>%
@@ -32,7 +38,7 @@ df <- df %>%
 
 #Reorder columns
 df <- df %>%
-	select(protein_ID, PG.ProteinGroups, organism, sample_ID, genotype, treatment, hpi, rep, abundance)
+	dplyr::select(protein_ID, PG.ProteinGroups, organism, sample_ID, genotype, treatment, hpi, rep, abundance)
 
 #Replace NaN with 0
 df <- df %>%
@@ -52,6 +58,14 @@ proteins_keep <- df %>%
 #remove low abundance proteins
 df <- df%>%
 	filter(protein_ID %in% proteins_keep)
+
+#pull count of Arabidopsis and Botrytis proteins
+#This is the number of proteins for each organism in the raw data
+df %>%
+	distinct(protein_ID) %>%                 # keep only unique IDs
+	mutate(prefix = str_sub(protein_ID, 1, 2)) %>%
+	count(prefix)
+
 
 df %>%
 	write.csv("data/timecourse/AtBc_Proteome_TimeCourse_filtered.csv", row.names = F)
