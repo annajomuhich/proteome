@@ -159,7 +159,7 @@ analyze_protein <- function(protein_ID, at) {
 #get list of genes to run
 proteins <- to_run
 
-proteins <- proteins[1:10] #subset for testing
+#proteins <- proteins[1:10] #subset for testing
 
 #setup outputs
 results <- list()
