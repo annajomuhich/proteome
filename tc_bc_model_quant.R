@@ -1,12 +1,12 @@
-##### Arabidopsis Time Course Model
-##### For modeling arabidopsis protein abundance over time
+##### Botrytis Time Course Model
+##### For modeling Botrytis protein abundance over time
 ##### February 2026 AJM
 
 ### Define paths from arguments =====================
 args <- commandArgs(trailingOnly = TRUE)
 
 #assign input files to specific variables
-at_counts_file <- args[1]		# Counts file (at_norm_counts_expressed.csv)
+bc_counts_file <- args[1]		# Counts file
 output_dir <- args[2]     # Output directory
 
 # Ensure output directory ends with a slash (for safe concatenation)
@@ -21,33 +21,33 @@ library(emmeans)
 library(car)
 
 #load count file for arabidopsis
-message("Loading at counts file: ", at_counts_file)
-at_long <- read.csv(at_counts_file)
+message("Loading bc counts file: ", bc_counts_file)
+bc_long <- read.csv(bc_counts_file)
 
 ### Reformat count data ======================
 
-at_long <- at_long %>%
-	filter(organism == "arabidopsis",
+bc_long <- bc_long %>%
+	filter(organism == "botrytis",
 	genotype == "Col.0")
 
-at_long <- at_long %>% dplyr::select(protein_ID, treatment, hpi, rep, abundance)
+bc_long <- bc_long %>% dplyr::select(protein_ID, treatment, hpi, rep, abundance)
 
-at <- at_long %>%
+bc <- bc_long %>%
 	pivot_wider(names_from = protein_ID,
 							values_from = abundance)
 
-at$treatment <- as.factor(at$treatment)
-at$hpi <- as.factor(at$hpi)
-at$rep <- as.factor(at$rep)
+bc$treatment <- as.factor(bc$treatment)
+bc$hpi <- as.factor(bc$hpi)
+bc$rep <- as.factor(bc$rep)
 
-# Convert columns that start with "AT" to integers
-at <- at %>%
-	mutate(across(starts_with("AT"), ~ as.numeric(.)))
+# Convert columns that start with "XP" to integers
+bc <- bc %>%
+	mutate(across(starts_with("XP"), ~ as.numeric(.)))
 
 
 ### Define model function ======================
 
-analyze_protein <- function(protein_ID, at) {
+analyze_protein <- function(protein_ID, bc) {
 	
 	message("modeling ", protein_ID)
 	
@@ -57,7 +57,7 @@ analyze_protein <- function(protein_ID, at) {
 		"~ treatment + hpi + treatment * hpi"
 	))
 	
-	model <- glmmTMB(formula, data = at, family = nbinom2) %>%
+	model <- glmmTMB(formula, data = bc, family = nbinom2) %>%
 		suppressMessages()
 	
 	#collect convergence note
@@ -127,9 +127,9 @@ analyze_protein <- function(protein_ID, at) {
 ### Run function across genes ===================================
 
 #get list of genes to run
-proteins <- unique(at_long$protein_ID)
+proteins <- unique(bc_long$protein_ID)
 
-#proteins <- proteins[1:10] #subset for testing
+proteins <- proteins[1:10] #subset for testing
 
 #setup outputs
 results <- list()
@@ -138,7 +138,7 @@ failed_proteins <- character()
 #run
 for (protein in proteins) {
 	tryCatch(
-		results[[protein]] <- analyze_protein(protein, at),
+			results[[protein]] <- analyze_protein(protein, bc),
 		error = function(e) {
 			message("Error for protein ", protein, " — skipping")
 			failed_proteins <<- c(failed_proteins, protein)
@@ -173,7 +173,7 @@ DEG_all <- subset(DEG_all, select = -p.value)
 #get anova p values
 anova_ps <- anova_corrected %>% filter(variable == "treatment") %>%
 	dplyr::select(protein_ID, p_adj)
-#join with at anova
+#join with bc anova
 DEG_all <- left_join(DEG_all, anova_ps, by = "protein_ID")
 
 #Put failed genes in a df
@@ -182,8 +182,8 @@ failed_proteins_df <- data.frame(failed_protein = failed_proteins, stringsAsFact
 #write out results
 message("Writing results to output directory: ", output_dir)
 dir.create(output_dir, recursive = T)
-write.csv(emm_log_all, paste0(output_dir, "at_tc_adjusted_emmeans_log.csv"), row.names = F)
-write.csv(emm_resp_all, paste0(output_dir, "at_tc_adjusted_emmeans_response.csv"), row.names = F)
-write.csv(anova_corrected, paste0(output_dir, "at_tc_anova.csv"), row.names = F)
-write.csv(DEG_all, paste0(output_dir, "at_tc_DEGs.csv"), row.names = F)
+write.csv(emm_log_all, paste0(output_dir, "bc_tc_adjusted_emmeans_log.csv"), row.names = F)
+write.csv(emm_resp_all, paste0(output_dir, "bc_tc_adjusted_emmeans_response.csv"), row.names = F)
+write.csv(anova_corrected, paste0(output_dir, "bc_tc_anova.csv"), row.names = F)
+write.csv(DEG_all, paste0(output_dir, "bc_tc_DEGs.csv"), row.names = F)
 write.csv(failed_proteins_df, paste0(output_dir, "failed_proteins.csv"), row.names = FALSE)
