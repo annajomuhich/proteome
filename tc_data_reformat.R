@@ -40,15 +40,22 @@ df <- df %>%
 df <- df %>%
 	dplyr::select(protein_ID, PG.ProteinGroups, organism, sample_ID, genotype, treatment, hpi, rep, abundance)
 
-#Replace NaN with 0
+# #Replace NaN with 0
+# df <- df %>%
+# 	mutate(abundance = if_else(is.na(abundance), 0, abundance))
+#Replace NaN with the lowest observed value
+min <- df %>%
+	filter(!is.na(abundance)) %>%
+	pull(abundance) %>%
+	min()
 df <- df %>%
-	mutate(abundance = if_else(is.na(abundance), 0, abundance))
+	mutate(abundance = if_else(is.na(abundance), min, abundance))
 
 ### Low protein abundance filtering
 #Get a list of proteins to keep. These are proteins that:
 #For any combo of protein x treatment x hpi, there is signal in >= 2 reps
 proteins_keep <- df %>%
-	filter(abundance > 0) %>%
+	filter(abundance > min) %>% #using the min value (~0.71) as threshold
 	group_by(protein_ID, treatment, hpi) %>%
 	summarise(n_rep = n_distinct(rep), .groups = "drop") %>%
 	filter(n_rep >= 2) %>%
@@ -68,4 +75,4 @@ df %>%
 
 
 df %>%
-	write.csv("data/timecourse/AtBc_Proteome_TimeCourse_filtered.csv", row.names = F)
+	write.csv("data/timecourse/input/AtBc_Proteome_TimeCourse_filtered.csv", row.names = F)

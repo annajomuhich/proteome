@@ -115,8 +115,8 @@ clust %>%
 ggsave("figures/timecourse/arabidopsis/windram_cluster_comparison/total_cluster_membership_sig.png",
 			 width = 5, height = 5)
 
-# clust <- clust %>%
-# 	mutate(protein_found = if_else(AGI %in% protein_found, "yes", "no"))
+clust <- clust %>%
+	mutate(protein_found = if_else(AGI %in% protein_found, "yes", "no"))
 
 # plot_df <- clust %>%
 # 	mutate(
@@ -174,48 +174,51 @@ clusters <- clust$Cluster %>% unique()
 plots <- list()
 
 for (cluster in clusters) {
-	prot_inclust <- clust %>%
-		filter(Cluster == cluster) %>%
-		filter(protein_found == "yes") %>%
-		pull(AGI)
-	plot_data <- emmeans %>%
-		filter(protein_ID %in% prot_inclust)
-	
-	summary_data <- plot_data %>%
-		group_by(hpi) %>%
-		summarise(
-			mean_emmean = mean(emmean_log, na.rm = TRUE),
-			sd_emmean   = sd(emmean_log, na.rm = TRUE),
-			.groups = "drop"
-		)
-	
-	plots[[length(plots) + 1]] <- ggplot(plot_data,
-																			 aes(x = hpi,
-																			 		y = emmean_log,
-																			 		group = protein_ID)) +
-		# individual protein lines
-		geom_line(color = "grey80", alpha = 0.6) +
-		# mean line
-		geom_line(data = summary_data,
-							aes(x = hpi, y = mean_emmean, group = 1),
-							color = "blue",
-							linewidth = 1.2) +
-		# + SD
-		geom_line(data = summary_data,
-							aes(x = hpi, y = mean_emmean + sd_emmean, group = 1),
-							color = "blue",
-							linetype = "dashed") +
-		# - SD
-		geom_line(data = summary_data,
-							aes(x = hpi, y = mean_emmean - sd_emmean, group = 1),
-							color = "blue",
-							linetype = "dashed") +
-		theme_minimal() +
-		ylab("emmean (log)") +
-		xlab("Time (HPI)") +
-		ggtitle(paste0("Cluster ", cluster))
+  prot_inclust <- clust %>%
+    filter(Cluster == cluster) %>%
+    filter(protein_found == "yes") %>%
+    pull(AGI)
+  plot_data <- emmeans %>%
+    filter(protein_ID %in% prot_inclust) %>%
+    group_by(protein_ID) %>%
+    mutate(centered_emmean_log = emmean_log - mean(emmean_log, na.rm = TRUE)) %>%
+    ungroup()
+  
+  summary_data <- plot_data %>%
+    group_by(hpi) %>%
+    summarise(
+      mean_emmean = mean(centered_emmean_log, na.rm = TRUE),
+      sd_emmean   = sd(centered_emmean_log, na.rm = TRUE),
+      .groups = "drop"
+    )
+  
+  plots[[length(plots) + 1]] <- ggplot(plot_data,
+                                       aes(x = hpi,
+                                           y = centered_emmean_log,
+                                           group = protein_ID)) +
+    # individual protein lines
+    geom_line(color = "grey80", alpha = 0.6) +
+    # mean line
+    geom_line(data = summary_data,
+              aes(x = hpi, y = mean_emmean, group = 1),
+              color = "blue",
+              linewidth = 1.2) +
+    # + SD
+    geom_line(data = summary_data,
+              aes(x = hpi, y = mean_emmean + sd_emmean, group = 1),
+              color = "blue",
+              linetype = "dashed") +
+    # - SD
+    geom_line(data = summary_data,
+              aes(x = hpi, y = mean_emmean - sd_emmean, group = 1),
+              color = "blue",
+              linetype = "dashed") +
+    theme_minimal() +
+    ylab("Centered emmean (log)") +
+    xlab("Time (HPI)") +
+    ggtitle(paste0("Cluster ", cluster))
 }
-pdf("figures/timecourse/arabidopsis/windram_cluster_comparison/protein_cluster_emmeans.pdf",
+pdf("figures/timecourse/arabidopsis/windram_cluster_comparison/protein_cluster_emmeans_meanscentered.pdf",
 		width = 4, height = 2)
 for (p in plots) {
 	print(p)
