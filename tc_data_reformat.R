@@ -40,6 +40,28 @@ df <- df %>%
 df <- df %>%
 	dplyr::select(protein_ID, PG.ProteinGroups, organism, sample_ID, genotype, treatment, hpi, rep, abundance)
 
+# If 2 bioreps of a given sample are NA but the other one has signal, convert that value to NA
+# It is probably stochastic detection and not real biology
+df <- df %>%
+	group_by(protein_ID, treatment, hpi, genotype) %>%
+	mutate(
+		n_detected = sum(!is.na(abundance)),
+		abundance = ifelse(n_detected == 1, NA, abundance)
+	) %>%
+	ungroup() %>%
+	dplyr::select(-n_detected)
+
+#Because we converted more values to NA, some proteins are now entirely NA:
+df %>%
+	group_by(protein_ID) %>%
+	summarise(all_na = all(is.na(abundance))) %>%
+	summarise(n_removed = sum(all_na))
+#Removing these:
+df <- df %>%
+	group_by(protein_ID) %>%
+	filter(any(!is.na(abundance))) %>%
+	ungroup()
+
 # #Replace NaN with 0
 # df <- df %>%
 # 	mutate(abundance = if_else(is.na(abundance), 0, abundance))
@@ -72,7 +94,6 @@ df %>%
 	distinct(protein_ID) %>%                 # keep only unique IDs
 	mutate(prefix = str_sub(protein_ID, 1, 2)) %>%
 	count(prefix)
-
 
 df %>%
 	write.csv("data/timecourse/input/AtBc_Proteome_TimeCourse_filtered.csv", row.names = F)

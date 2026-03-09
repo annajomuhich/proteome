@@ -4,8 +4,8 @@
 library(tidyverse)
 library(pheatmap)
 
-df <- read.csv("data/timecourse/tc_at_model_quant_20260225/at_tc_adjusted_emmeans_log.csv")
-prot_int <- read.csv("data/timecourse/tc_at_model_quant_20260225/at_tc_anova.csv") %>%
+df <- read.csv("data/timecourse/arabidopsis/tc_at_model_quant_20260306/at_tc_adjusted_emmeans_log.csv")
+prot_int <- read.csv("data/timecourse/arabidopsis/tc_at_model_quant_20260306/at_tc_anova.csv") %>%
 	filter(variable == "treatment" | variable == "treatment:hpi") %>%
 	filter(p_adj < 0.05) %>%
 	pull(protein_ID) %>%
@@ -23,7 +23,8 @@ df <- df %>%
 fc_df <- df %>%
 	select(protein_ID, treatment, hpi, emmean_log) %>%
 	pivot_wider(names_from = treatment, values_from = emmean_log) %>%
-	mutate(log2FC = (infected - mock)/log(2)) %>%
+	mutate(log2FC = (infected - mock)/log(2)) %>% #this one if values are already logged
+	#mutate(log2FC = log2(infected/mock)) #%>%		#this one if values are response-scale
 	select(protein_ID, hpi, log2FC)
 
 #sample a subset of proteins
@@ -45,7 +46,7 @@ protein_dist  <- dist(heat_mat)
 protein_clust <- hclust(protein_dist, method = "complete")
 
 png(filename = "figures/timecourse/arabidopsis/tc_at_heatmap.png",
-		width = 4000, height = 8000, res = 1500)
+		width = 3000, height = 8000, res = 1500)
 pheatmap(
 	heat_mat,
 	cluster_rows = protein_clust,
@@ -55,7 +56,7 @@ pheatmap(
 	color = colorRampPalette(
 		c("blue", "white", "red")
 	)(50),
-	breaks = seq(-4, 4, length.out = 51),
+	#breaks = seq(-4, 4, length.out = 51),
 	legend = TRUE,
 	labels_col = c("0", "8", "16", "24", "32", "40", "48")
 )

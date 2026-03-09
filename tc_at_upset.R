@@ -5,7 +5,7 @@ library(tidyverse)
 library(ComplexUpset)
 
 ##### ------------- Set up data -------------------------
-df <- read.csv("data/timecourse/tc_at_model_quant_20260225/at_tc_anova.csv") %>%
+df <- read.csv("data/timecourse/arabidopsis/tc_at_model_quant_20260306/at_tc_anova.csv") %>%
 	dplyr::select(protein_ID, variable, p_adj) %>%
 	filter(variable != "intercept")
 
@@ -32,7 +32,7 @@ upset(
 	intersect = c("Time", "Infection", "Time X\nInfection"),
 	annotations = list(),
 	base_annotations = list(
-		'Significant Arabidopsis Genes' = intersection_size(text = list(size = 3))
+		'Significant Arabidopsis Proteins' = intersection_size(text = list(size = 3))
 	),
 	width_ratio = c(0, 1),        # removes left panel entirely
 	set_sizes = FALSE             # <- this removes the "Set Size" title
