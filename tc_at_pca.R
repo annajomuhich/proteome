@@ -8,16 +8,23 @@ library(readxl)
 library(RColorBrewer)
 library(ggrepel)
 
-df <- read.csv("data/timecourse/tc_at_model_quant_20260225/at_tc_adjusted_emmeans_log.csv") %>%
-	dplyr::select(treatment, hpi, emmean_log, protein_ID)
+# df <- read.csv("data/timecourse/tc_at_model_quant_20260225/at_tc_adjusted_emmeans_log.csv") %>%
+# 	dplyr::select(treatment, hpi, emmean_log, protein_ID)
+
+df <- read.csv("data/timecourse/input/AtBc_Proteome_TimeCourse_filtered.csv") %>%
+	filter(genotype == "Col.0" & organism == "arabidopsis") %>%
+	dplyr::select(protein_ID, treatment, hpi, rep, abundance)
 
 #Check for any NAs (needs to be FALSE)
 any(is.na(df))
 
 #pivot wide
+# df <- df %>%
+# 	pivot_wider(names_from = protein_ID,
+# 							values_from = emmean_log)
 df <- df %>%
 	pivot_wider(names_from = protein_ID,
-							values_from = emmean_log)
+							values_from = abundance)
 
 #Check for any NAs (needs to be FALSE)
 any(is.na(df))
@@ -27,7 +34,8 @@ colSums(is.na(df) > 0) #see by column
 ######### PCA
 
 #get a numerical dataframe
-dfpca <- df[,-c(1,2)]
+# dfpca <- df[,-c(1,2)]
+dfpca <- df[,-c(1,3)]
 
 #run PCA
 pca_result <- prcomp(dfpca, scale. = FALSE)
@@ -50,7 +58,7 @@ pca_df <- as.data.frame(pca_result$x)
 ggplot(data = pca_df, aes(PC1, PC2)) + geom_point()
 
 #append host geno and iso information
-pca_df <- cbind(df[,c(1,2)], pca_df)
+pca_df <- cbind(df[,c(1:3)], pca_df)
 
 pca_df <- pca_df %>%
 	mutate(hpi = as.factor(hpi),

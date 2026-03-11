@@ -3,10 +3,10 @@
 
 library(tidyverse)
 
-anova <- read.csv("data/timecourse/botrytis/tc_bc_model_timepoint_20260306/bc_tc_anova.csv") %>%
+anova <- read.csv("data/timecourse/botrytis/tc_bc_model_timepoint_20260309/bc_tc_anova.csv") %>%
 	filter(variable == "treatment")
 
-emmeans <- read.csv("data/timecourse/botrytis/tc_bc_model_timepoint_20260306/bc_tc_adjusted_emmeans_log.csv")
+emmeans <- read.csv("data/timecourse/botrytis/tc_bc_model_timepoint_20260309/bc_tc_adjusted_emmeans_log.csv")
 
 first_accumulation <- anova %>%
 	filter(p_adj < 0.05) %>%
@@ -36,4 +36,4 @@ first_accumulation %>%
 		y = "Number of Botrytis proteins"
 	) +
 	theme_minimal()
-ggsave("tc_bc_protaccum.png", height = 4, width = 3)
+ggsave("figures/timecourse/botrytis/tc_bc_protaccum.png", height = 4, width = 3)

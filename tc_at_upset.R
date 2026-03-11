@@ -5,7 +5,7 @@ library(tidyverse)
 library(ComplexUpset)
 
 ##### ------------- Set up data -------------------------
-df <- read.csv("data/timecourse/arabidopsis/tc_at_model_quant_20260306/at_tc_anova.csv") %>%
+df <- read.csv("data/timecourse/arabidopsis/tc_at_model_quant_20260309/at_tc_anova.csv") %>%
 	dplyr::select(protein_ID, variable, p_adj) %>%
 	filter(variable != "intercept")
 

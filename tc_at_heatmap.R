@@ -1,18 +1,33 @@
-### Heatmap with HCA for the 2293 infection-responsive At proteins
+### Heatmap with HCA for the infection-responsive At proteins
 ### February 2026 AJM
 
 library(tidyverse)
 library(pheatmap)
 
-df <- read.csv("data/timecourse/arabidopsis/tc_at_model_quant_20260306/at_tc_adjusted_emmeans_log.csv")
-prot_int <- read.csv("data/timecourse/arabidopsis/tc_at_model_quant_20260306/at_tc_anova.csv") %>%
+df <- read.csv("data/timecourse/arabidopsis/tc_at_model_quant_20260309/at_tc_adjusted_emmeans_log.csv")
+
+#Get list of significant proteins
+prot_int <- read.csv("data/timecourse/arabidopsis/tc_at_model_quant_20260309/at_tc_anova.csv") %>%
 	filter(variable == "treatment" | variable == "treatment:hpi") %>%
 	filter(p_adj < 0.05) %>%
 	pull(protein_ID) %>%
 	unique()
 
+#Collect 1 timepoint only proteins. There are 957 of them
+prot_1tp <- read.csv('data/timecourse/input/AtBc_Proteome_TimeCourse_filtered.csv') %>%
+	filter(abundance >= 0.8) %>%
+	group_by(protein_ID, treatment) %>%
+	summarise(n_hpi = n_distinct(hpi), .groups = "drop") %>%
+	filter(n_hpi == 7) %>%
+	pull(protein_ID) %>%
+	unique()
+
+#filter to significant proteins
 df <- df %>%
 	filter(protein_ID %in% prot_int)
+# #filter to remove 1tp only proteins
+df <- df %>%
+	filter(!(protein_ID %in% prot_1tp))
 
 #convert to factor
 df <- df %>%
@@ -27,10 +42,15 @@ fc_df <- df %>%
 	#mutate(log2FC = log2(infected/mock)) #%>%		#this one if values are response-scale
 	select(protein_ID, hpi, log2FC)
 
+# Convert outlier log2FC (from presence/absence expression)
+# Log2FC values will max out at 5 and min at -5 for visualization
+fc_df <- fc_df %>%
+	mutate(log2FC = ifelse(log2FC > 4, 4, ifelse(log2FC < -4, -4, log2FC)))
+
 #sample a subset of proteins
 sampled_proteins <- fc_df %>%
 	distinct(protein_ID) %>%
-	slice(seq(1, n(), by = 4)) %>%
+	slice(seq(1, n(), by = 1)) %>%
 	pull(protein_ID)
 
 fc_sampled <- fc_df %>%
@@ -43,9 +63,9 @@ heat_mat <- fc_sampled %>%
 	as.matrix()
 
 protein_dist  <- dist(heat_mat)
-protein_clust <- hclust(protein_dist, method = "complete")
+protein_clust <- hclust(protein_dist, method = "median")
 
-png(filename = "figures/timecourse/arabidopsis/tc_at_heatmap.png",
+png(filename = "figures/timecourse/arabidopsis/tc_at_heatmap_median.png",
 		width = 3000, height = 8000, res = 1500)
 pheatmap(
 	heat_mat,
