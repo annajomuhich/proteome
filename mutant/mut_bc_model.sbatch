@@ -15,6 +15,6 @@ module load R
 COUNTS_FILE1=$1
 OUTPUT_DIR=$2
 
-Rscript ~/proteome/mut_bc_model.R \
+Rscript ~/proteome/mutant/mut_bc_model.R \
 "$COUNTS_FILE1" \
 "$OUTPUT_DIR"
