@@ -32,8 +32,26 @@ first_accumulation %>%
 	ggplot(aes(x = first_hpi, y = n)) +
 	geom_col(fill = "black") +
 	labs(
-		x = "First Accumulation Time (hpi)",
+		x = "First Detection Time (hpi)",
 		y = "Number of Botrytis proteins"
 	) +
 	theme_minimal()
-ggsave("figures/timecourse/botrytis/tc_bc_protaccum.png", height = 4, width = 3)
+#ggsave("figures/timecourse/botrytis/tc_bc_protaccum.png", height = 4, width = 3)
+
+#Save the first accumulation lists for GO analysis
+xp <- read.csv("data/gene_descriptions/Bcin_XP_key.csv")
+first_df <- left_join(first_accumulation, xp, join_by("protein_ID" == "XP")) %>%
+	dplyr::select(gene_ID, first_hpi)
+any(is.na(first_df))
+first_df %>%
+	write.csv("data/timecourse/botrytis/tc_bc_model_timepoint_20260309/bc_first_hpi.csv", row.names = F)
+
+#make a version with annotations
+annot <- read.csv("data/gene_descriptions/Bcin_Annotations_Full_transcript.csv") %>%
+	dplyr::select(X.Gene.ID., X.Gene.Name.or.Symbol., X.PFam.Description.)
+colnames(annot) <- c("gene_ID", "gene_name", "gene_desc")
+first_df <- left_join(first_df, annot, by = "gene_ID")
+first_df <- arrange(first_df, first_hpi)
+first_df <- unique(first_df)
+first_df %>%
+	write.csv("data/timecourse/botrytis/tc_bc_model_timepoint_20260309/bc_first_hpi_annot.csv", row.names = F)
