@@ -207,7 +207,7 @@ write.csv(failed_proteins_df, paste0(output_dir, "bc_tgg12vsCol0/", "failed_prot
 
 #filter to only Col0 and aop2
 bc_filt <- bc %>%
-	filter(genotype %in% c("Col0", "aop2"))
+	filter(genotype %in% c("Col0", "AOP2"))
 
 # Remove any columns from bc_filt where all values are zero
 bc_filt <- bc_filt[, !sapply(bc_filt, function(col) all(col == 0, na.rm = TRUE))]
