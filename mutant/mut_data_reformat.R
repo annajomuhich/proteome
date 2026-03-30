@@ -128,3 +128,111 @@ df %>% pull(gene_ID) %>% unique() %>% length()
 
 df %>%
 	write.csv("data/mutant/input/Bc_Proteome_Mut_filtered.csv", row.names = F)
+
+### ------------ Arabidopsis ------------------------------------------------
+df_raw <- readxl::read_xlsx("data/mutant/input/Arabidopsis Proteome Quantification.xlsx")
+
+# remove contaminant proteins
+df <- df_raw %>%
+	filter(Organism == "Arabidopsis thaliana")
+
+#remove extra columns
+df <- df %>%
+	dplyr::select(!c(Botrytis, Control, Disease, Col, MYB, GLS, `Indistinguishable Proteins`))
+
+# Remove rows where all columns (except columns 1-8) contain 0
+cols_to_check <- setdiff(seq_along(df), 1:8)
+df <- df[!apply(df[, cols_to_check], 1, function(x) all(x == 0, na.rm = TRUE)), ]
+
+#pull count of Arabidopsis proteins
+#This is the number of proteins in the raw data
+df %>% nrow()
+
+#get sample metadata
+df <- df %>%
+	pivot_longer(cols = all_of(cols_to_check),
+							 names_to = "sample_ID",
+							 values_to = "abundance") %>%
+	mutate(
+		genotype = str_extract(sample_ID, "^[^_]+"),
+		treatment = if_else(str_detect(sample_ID, "(?<=_)[B]"), "infected", "mock"),
+		rep = str_extract(sample_ID, "\\d+$")
+	)
+
+#Make sure everything has a AT gene ID.
+#Did this by looking up the Protein IDs on Uniprot:
+at_ids <- df %>% pull(`Protein ID`) %>%
+	unique()
+at_ids_df <- as.data.frame(at_ids)
+#at_ids_df %>% write.csv("data/gene_descriptions/At_uniprot_IDs.csv", row.names = F)
+uniprot <- read.delim("data/gene_descriptions/At_uniprot_IDs_output.tsv")
+uniprot <- uniprot %>% dplyr::select(Entry, Gene.Names)
+uniprot$Ath <- str_extract(uniprot$Gene.Names, "At[0-9CM]g\\d{5}")
+uniprot <- uniprot %>% dplyr::select(-Gene.Names)
+uniprot <- uniprot %>%
+	dplyr::rename(gene_ID = Ath)
+df <- left_join(df, uniprot, join_by("Protein ID" == "Entry")) %>%
+	dplyr::select(gene_ID, everything())
+
+#Reorder columns
+df <- df %>%
+	dplyr::select(gene_ID, sample_ID, abundance, genotype, treatment, rep, everything())
+
+#arrange by gene ID
+df <- df %>%
+	arrange(gene_ID)
+
+#Some entries of AOP2 have a typo
+df <- df %>%
+	mutate(genotype = if_else(genotype == "A0P2", "AOP2", genotype))
+
+# If 2 bioreps of a given sample are NA but the other one has signal, convert that value to NA
+# It is probably stochastic detection and not real biology
+df %>% filter(gene_ID == "At1g01220" & genotype == "Sha")
+df <- df %>%
+	group_by(gene_ID, treatment, genotype) %>%
+	mutate(
+		n_detected = sum(abundance == 0, na.rm = TRUE),
+		abundance = ifelse(n_detected == 2, 0, abundance)
+	) %>%
+	ungroup() %>%
+	dplyr::select(-n_detected)
+df %>% filter(gene_ID == "At1g01220" & genotype == "Sha")
+
+#Because we converted more values to NA, some proteins are now entirely NA:
+df %>%
+	group_by(gene_ID) %>%
+	summarise(all_zero = all(abundance == 0)) %>%
+	summarise(n_removed = sum(all_zero))
+#Removing these:
+df <- df %>%
+	group_by(gene_ID) %>%
+	filter(any(abundance != 0)) %>%
+	ungroup()
+
+
+### Low protein abundance filtering
+#Get a list of proteins to keep. These are proteins that:
+#For any combo of protein x treatment, there is signal in >= 2 reps
+proteins_keep <- df %>%
+	filter(abundance != 0) %>%
+	group_by(gene_ID, treatment) %>%
+	summarise(n_rep = n_distinct(rep), .groups = "drop") %>%
+	filter(n_rep >= 2) %>%
+	pull(gene_ID) %>%
+	unique()
+
+#remove low abundance proteins
+df <- df%>%
+	filter(gene_ID %in% proteins_keep)
+
+#count remaining proteins
+df %>% pull(gene_ID) %>% unique() %>% length()
+
+#reformat Gene IDs
+df <- df %>%
+	mutate(gene_ID = gsub(pattern = "t", replacement = "T", x = gene_ID)) %>%
+	mutate(gene_ID = gsub(pattern = "g", replacement = "G", x = gene_ID))
+
+#write out
+df %>% write.csv("data/mutant/input/At_Proteome_Mut_filtered.csv", row.names = F)
