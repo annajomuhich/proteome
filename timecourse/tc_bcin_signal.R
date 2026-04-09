@@ -28,7 +28,7 @@ summary %>%
 	ylab("Botrytis protein abundance %") +
 	xlab("HPI") +
 	scale_color_manual(values = c("red", "blue"))
-ggsave("figures/timecourse/botrytis/tc_bcin_signal_pct.png", height = 4, width = 5)
+#ggsave("figures/timecourse/botrytis/tc_bcin_signal_pct.png", height = 4, width = 5)
 
 summary %>%
 	ggplot(aes(x = hpi, y = botrytis, color = genotype)) +
@@ -37,4 +37,16 @@ summary %>%
 	ylab("Botrytis protein abundance") +
 	xlab("HPI") +
 	scale_color_manual(values = c("red", "blue"))
-ggsave("figures/timecourse/botrytis/tc_bcin_signal.png", height = 4, width = 5)
+#ggsave("figures/timecourse/botrytis/tc_bcin_signal.png", height = 4, width = 5)
+
+summary %>%
+	filter(genotype == "Col.0") %>%
+	filter(hpi != 0) %>%
+	ggplot(aes(x = hpi, y = log10(botrytis))) +
+	geom_jitter(size = 2.5, width = 0.15) +
+	theme_minimal() +
+	ylab("Botrytis protein abundance (log10)") +
+	xlab("HPI") +
+	scale_color_manual(values = c("red", "blue"))
+	#scale_y_log10()
+ggsave("figures/timecourse/botrytis/tc_bcin_signal.png", height = 3, width = 3)

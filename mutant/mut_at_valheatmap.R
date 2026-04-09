@@ -54,7 +54,7 @@ df <- left_join(df, gsl, join_by(gene_ID == AGI))
 # )
 
 heat_df <- df %>%
-	group_by(treatment, GeneName) %>%
+	group_by(GeneName) %>%
 	mutate(abundance_mean = as.numeric(scale(abundance_mean))) %>%
 	ungroup() %>%
 	mutate(genotype = as.character(genotype)) %>%
@@ -66,7 +66,12 @@ gsl_names_order <- gsl %>% pull(GeneName)
 heat_df <- heat_df %>%
 	filter(GeneName %in% gsl_names_order) %>%
 	mutate(GeneName = factor(GeneName, levels = gsl_names_order),
-				 genotype = factor(genotype, levels = c("Col0", "Ler", "Sha", "AOP2", "myb28", "myb29", "myb2829", "tgg12")))
+				 genotype = factor(
+				 	genotype, 
+				 	levels =c("Col0", "Ler", "Sha", "AOP2", "myb28", "myb29", "myb2829", "tgg12")),
+				 treatment = factor(
+				 	treatment,
+				 	levels = c("mock", "infected")))
 
 ggplot(heat_df, aes(x = genotype, y = GeneName, fill = abundance_mean)) +
 	geom_tile() +
@@ -81,7 +86,8 @@ ggplot(heat_df, aes(x = genotype, y = GeneName, fill = abundance_mean)) +
 		axis.text.x = element_text(angle = 45, hjust = 1),
 		strip.text = element_text(face = "bold")
 	)
-ggsave("figures/mutant/arabidopsis/mut_at_valheatmap.png", height = 5.16, width = 4.3)
+ggsave("figures/mutant/arabidopsis/mut_at_valheatmap.png", height = 5.16, width = 4.3,
+			dpi = 1500)
 
 #presence/absence option
 #do before scaling the data

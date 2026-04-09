@@ -32,11 +32,11 @@ first_accumulation %>%
 	ggplot(aes(x = first_hpi, y = n)) +
 	geom_col(fill = "black") +
 	labs(
-		x = "First Detection Time (hpi)",
+		x = "First Detection Time (HPI)",
 		y = "Number of Botrytis proteins"
 	) +
 	theme_minimal()
-#ggsave("figures/timecourse/botrytis/tc_bc_protaccum.png", height = 4, width = 3)
+ggsave("figures/timecourse/botrytis/tc_bc_protaccum.png", height = 3, width = 3)
 
 #Save the first accumulation lists for GO analysis
 xp <- read.csv("data/gene_descriptions/Bcin_XP_key.csv")

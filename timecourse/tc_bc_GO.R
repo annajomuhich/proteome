@@ -93,6 +93,16 @@ df_annot <- df_annot %>%
 			sep = ",") %>%
 			gsub("(^,|,$|,,)", "", .)) %>%  # Remove leading/trailing commas and duplicate commas
 	dplyr::select(gene, GO)  # Keep only the Gene ID and the new GO column
+
+#get all detected proteins in the dataset
+detected_genes <- read.csv("data/timecourse/input/AtBc_Proteome_TimeCourse_filtered.csv") %>%
+	filter(startsWith(protein_ID, "B")) %>%
+	pull(protein_ID) %>%
+	unique()
+#filter annotation to detected proteins
+df_annot <- df_annot %>%
+	filter(gene %in% detected_genes)
+
 #setup geneID2GO
 geneID2GO <- geneID2GO_setup(df_annot)
 #get all genes
@@ -135,6 +145,7 @@ for (hpi in names(BPsig_list)) {
 
 #Trimming contents of each based on Revigo output from web app.
 
+### ------------------- tested against all proteins ----------------------------------
 #16hpi had no redundancies.
 #24hpi:
 revigo_24hpi <- read.delim("data/timecourse/botrytis/GO/Revigo_BP_Table_24hpi.tsv") %>% pull(TermID)
@@ -153,30 +164,6 @@ BPsig_list[["40"]] %>%
 	write.csv("data/timecourse/botrytis/GO/tc_bc_GO_BPsig_hpi_40_revigo.csv", row.names = F)
 #8 and 48hpi had no significant GO terms
 
-# ### rrvgo to remove redundant hierarchical GO Terms --------------------------------------
+### ----------------- tested against only detected proteins -----------------------
 
-# # For Botrytis this would require building a database for it. Just using the web app for now.
-# # Could use this for Arabidopsis tho
-
-# #BiocManager::install("rrvgo")
-# #BiocManager::install("GO.db")
-# library(rrvgo)
-# library(GO.db)
-# library(GOSemSim)
-# 
-# go_terms <- go_results_list[["16"]] %>% filter(Ontology == "BP") %>% pull(GO.)
-# 
-# semdata <- godata(
-# 	ont = "BP",
-# 	computeIC = T
-# # )
-# 
-# simMatrix <- calculateSimMatrix(go_terms,orgdb="GO.db",
-# 																ont="BP")
-# 
-# reducedTerms <- reduceSimMatrix(
-# 	simMatrix,
-# 	scores = pvalues,
-# 	threshold = 0.7,
-# 	orgdb = NULL)
 

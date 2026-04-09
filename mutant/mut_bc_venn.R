@@ -41,7 +41,7 @@ significant_genes <- map(model_dfs, ~ .x %>%
 								 	unique()
 								 	)
 
-names(significant_genes) <- c("tgg1/2", "aop2", "myb28/29", "Accession")
+names(significant_genes) <- c("tgg1/2", "AOP2", "myb28/29", "Accession")
 
 ### Plot all overlaps ----------------------------------------------------------
 ggVennDiagram(significant_genes, label = "count") +

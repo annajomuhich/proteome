@@ -7,7 +7,8 @@ library(pheatmap)
 df <- read.csv("data/timecourse/botrytis/tc_bc_model_timepoint_20260309/bc_tc_adjusted_emmeans_response.csv")
 
 df <- df %>%
-	filter(treatment == "infected")
+	filter(treatment == "infected") %>%
+	filter(hpi != 0)
 
 #convert to factor
 df <- df %>%
@@ -43,6 +44,6 @@ pheatmap(
 	)(50),
 	#breaks = seq(-4, 4, length.out = 51),
 	legend = TRUE,
-	labels_col = c("0", "8", "16", "24", "32", "40", "48")
+	labels_col = c("8", "16", "24", "32", "40", "48")
 )
 dev.off()
