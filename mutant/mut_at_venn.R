@@ -58,7 +58,9 @@ model_variable_lists <- map2(model_dfs, names(model_dfs), function(df, name) {
 	for (var in vars) {
 		# For each variable in this model, get protein_IDs that are significant
 		sig_proteins <- df %>%
-			filter(variable == var, p_adj < 0.05) %>%
+			filter(variable == var,
+						 p_adj < 0.05,
+						 ) %>%
 			pull(protein_ID) %>%
 			unique()
 		
@@ -126,6 +128,50 @@ for (vec_name in names(significant_genes)) {
 }
 significant_genes_df %>% write.csv("data/mutant/mut_bc_model_20260323/model_sig_2XFC_list.csv", row.names = F)
 
+### ----------- Trying with 2xFC filter ---------------------
 
+deg <- list(
+	tgg = read.csv("data/mutant/mut_at_model_20260330/at_tgg12vsCol0/at_tgg12vsCol0_DEGs.csv"),
+	aop = read.csv("data/mutant/mut_at_model_20260330/at_aop2vsCol0/at_aop2vsCol0_DEGs.csv"),
+	myb = read.csv("data/mutant/mut_at_model_20260330/at_mybsvsCol0/at_mybsvsCol0_DEGs.csv"),
+	acc = read.csv("data/mutant/mut_at_model_20260330/at_accessions/at_accessions_DEGs.csv")
+)
+
+#filter each dataframe to those with a 2X FC from Col0
+deg <- map(deg, ~ .x %>%
+					 	filter(log2FC > 1 | log2FC < -1) %>%
+					 	filter(p_adj < 0.05)
+)
+
+#pull out the protein_IDs for each dataframe
+deg_ids <- map(deg, ~ .x %>%
+							 	pull(protein_ID)
+)
+
+# For each vector in significant_genes, keep only elements also found in the corresponding deg_ids vector
+significant_genes <- map2(significant_genes, deg_ids, function(sig, deg) {
+	sig[sig %in% deg]
+})
+
+#plot the venn diagram
+ggVennDiagram(significant_genes, label = "count") +
+	scale_fill_gradient(low = "white", high = "purple") +
+	theme_void() +
+	coord_cartesian(clip = "off") +
+	theme(legend.position = "none", text = element_text(size = 10), plot.margin = margin(20, 40, 20, 40))
+ggsave("figures/mutant/botrytis/mut_bc_venn_2XFC.png", width = 4, height = 4)
+
+#write the significant_genes to a dataframe
+# Create a list of all unique genes across all vectors
+all_genes <- unique(unlist(significant_genes))
+
+# Create a data frame where each gene has a column for each vector,
+# marked "yes" if present, "no" otherwise
+significant_genes_df <- data.frame(gene_ID = all_genes)
+
+for (vec_name in names(significant_genes)) {
+	significant_genes_df[[vec_name]] <- ifelse(
+		significant_genes_df$gene_ID %in% significant_genes[[vec_name]], "yes", "no"
+	)
 
 

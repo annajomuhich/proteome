@@ -86,8 +86,8 @@ ggplot(heat_df, aes(x = genotype, y = GeneName, fill = abundance_mean)) +
 		axis.text.x = element_text(angle = 45, hjust = 1),
 		strip.text = element_text(face = "bold")
 	)
-ggsave("figures/mutant/arabidopsis/mut_at_valheatmap.png", height = 5.16, width = 4.3,
-			dpi = 1500)
+ggsave("figures/mutant/arabidopsis/mut_at_valheatmap.png", height = 5.3, width = 4.3,
+			dpi = 1000)
 
 #presence/absence option
 #do before scaling the data

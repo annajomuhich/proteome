@@ -30,7 +30,7 @@ df %>%
 		geom_smooth(method = "lm", se = FALSE) +
 		theme_minimal() +
 		scale_color_manual(values = c("#81c97f", "#666666")) +
-		labs(x = "ITCase Expression (log2)", y = expression("Mean Lesion Size (mm"^2*")"), color = "Host Genotype")
+		labs(x = "BcSaxA Expression (log2)", y = expression("Mean Lesion Size (mm"^2*")"), color = "Host Genotype")
 
 library(dplyr)
 library(ggplot2)
@@ -67,7 +67,7 @@ df %>%
 	theme_classic() +
 	scale_color_manual(values = c("Col0" = "#81c97f", "tgg1/2" = "#666666")) +
 	labs(
-		x = "ITCase Expression (log2)",
+		x = "BcSaxA Expression (log2)",
 		y = expression("Mean Lesion Size (mm"^2*")"),
 		color = "Host Genotype"
 	)

@@ -1,6 +1,8 @@
 ### Making a supplementary table for the model output - Arabidopsis TC
 ### March 2026 AJM
 
+library(tidyverse)
+
 emmeans <- read.csv("data/timecourse/arabidopsis/tc_at_model_quant_20260311/at_tc_adjusted_emmeans_response.csv")
 anova <- read.csv("data/timecourse/arabidopsis/tc_at_model_quant_20260311/at_tc_anova.csv")
 annot <- read_tsv("data/gene_descriptions/Ath_gene_descriptions.txt")
@@ -34,6 +36,11 @@ df <- df %>%
 								`Primary Gene Symbol`,
 								cluster, everything()) %>%
 	dplyr::rename(gene_description = `Primary Gene Symbol`)
+
+#how many proteins significantly respond to infection?
+df %>%
+	filter(pval_infection < 0.05 | pval_interaction < 0.05) %>%
+	nrow()
 
 df %>%
 	write.csv("tables/tc_at_model_table.csv", row.names = F)
